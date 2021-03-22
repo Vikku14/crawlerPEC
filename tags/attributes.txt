@@ -1,0 +1,1 @@
+['discover', 'appoint', 'identify', 'key_out', 'constitute', 'cite', 'gens', 'nominate', 'refer', 'call', 'mention', 'make', 'bring_up', 'distinguish', 'list', 'epithet', 'diagnose', 'figure', 'describe', 'public_figure', 'key', 'name', 'advert']
