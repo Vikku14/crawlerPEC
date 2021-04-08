@@ -12,12 +12,11 @@ BOT_NAME = 'general'
 SPIDER_MODULES = ['general.spiders']
 NEWSPIDER_MODULE = 'general.spiders'
 
-
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'general (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -42,17 +41,23 @@ ROBOTSTXT_OBEY = True
 #   'Accept-Language': 'en',
 #}
 
+USER_AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+# USER_AGENT = 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
+
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
 #    'general.middlewares.GeneralSpiderMiddleware': 543,
 #}
-
+# PROXY_POOL_ENABLED = True
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'general.middlewares.GeneralDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+    # 'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    # 'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 700,
+    # 'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
+}
+
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
