@@ -1,6 +1,7 @@
 import scrapy
 import pandas as pd
 from ..items import GeneralItem
+import requests
 # from collections import defaultdict
 
 class WebsitesSpider(scrapy.Spider):
@@ -35,20 +36,34 @@ class WebsitesSpider(scrapy.Spider):
 
     no_of_rows = int(data.shape[0])
 
-    handle_httpstatus_list = [404, 500, 999]
+    handle_httpstatus_list = [404, 500, 999, 301, 302]
 
     def parse(self, response):
-        print("row_urls", self.row_urls)
-        print(response.request.url)
+        print("Start --> row_urls", self.row_urls)
+        print("current URL: ",response.request.url)
+        print("Status: ",response.status)
+        try:                                                                                  # Handling redirection
+            redirect_url = response.request.meta['redirect_urls'][0].split("://")[1]
+            print("url history: ",redirect_url)
+            self.row_urls[response.request.url.split("://")[1]] = self.row_urls.pop(redirect_url)
+            print(self.row_urls)
+        except Exception as e:
+            pass
+
+
         if self.row_urls[response.request.url.split("://")[1]] == False:
             r = response.request.url
             item = GeneralItem()
 
-            if response.status == 999:
+            if 'linkedin' in r:
                 print("linkedin URL")
-                for ar in self.Linkedin_crawler(response):
-                    yield ar
-
+                yield scrapy.Request(r, callback=self.Linkedin_crawler)
+                # for ar in self.Linkedin_crawler(response):
+                #     yield ar
+            elif response.request.url.endswith(".pdf"):  # TODO: Handle PDFs
+                print("pdf found")
+                self.row_urls[response.request.url.split("://")[1]] = True
+                print(self.row_urls)
             elif response.status == 404:
                 item['url'] = r
                 item['Name'] = ["404: Page not found"]
@@ -58,7 +73,7 @@ class WebsitesSpider(scrapy.Spider):
                 item['h5'] = ['No data']
                 item['h6'] = ['No data']
                 # yield item
-            else:
+            elif response.status != 500:
                 name = list(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name')]/text()").extract()))
                 if not name:
                     name = ['No data']
@@ -92,9 +107,11 @@ class WebsitesSpider(scrapy.Spider):
                 # yield item
             self.academician.append(item)                                             # Storing the data fetched by all URLs for each academician.
             # print(self.academician)
+            print(self.academician)
             self.row_urls[response.request.url.split("://")[1]] = True
+            print("before enterting: ", self.row_urls)
             if all(value == True for value in self.row_urls.values()):
-                # print("enterkjdjfkldsajf ")
+                print("entered into all True block")
                 for element in self.academician:                                        # Comparing the data fetched in previous step.
                     if element:
                         if element['Name'] not in [['404: Page not found'], ['No data']]:
@@ -137,7 +154,7 @@ class WebsitesSpider(scrapy.Spider):
 
                 # fetch next row of excel file
                 print("row_number",self.row_number)
-                print("Total Rows",self.no_of_rows)
+                # print("Total Rows",self.no_of_rows)
                 if self.row_number <= self.no_of_rows:
 
                     data_row = self.data.iloc[[self.row_number]]
@@ -152,13 +169,12 @@ class WebsitesSpider(scrapy.Spider):
 
                     print("row_urls", self.row_urls)
                     for link in self.row_urls_0:
-                        yield response.follow(link, callback=self.parse)
+                        if link:
+                            print("link "+str(link))
+                            yield response.follow(link, callback=self.parse)
                     self.row_number += 1
 
 
-    def Linkedin_crawler(self, response):
-        print("inside fucntion",response)
-        yield None
 
     def initialize_academician_data(self):
         self.academician_data = {
@@ -170,3 +186,7 @@ class WebsitesSpider(scrapy.Spider):
         'h6':['No data'],
         'url':''
         }
+
+    def Linkedin_crawler(self, response):
+        print("inside fucntion",response)
+        return None
