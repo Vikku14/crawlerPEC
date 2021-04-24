@@ -13,7 +13,7 @@ SPIDER_MODULES = ['general.spiders']
 NEWSPIDER_MODULE = 'general.spiders'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'general (+http://www.yourdomain.com)'
-
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2049.0 Safari/537.36'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
 DUPEFILTER_CLASS = 'scrapy.dupefilters.BaseDupeFilter'
@@ -40,6 +40,8 @@ DUPEFILTER_CLASS = 'scrapy.dupefilters.BaseDupeFilter'
 #   'Accept-Language': 'en',
 #}
 
+RETRY_ENABLED = False
+
 USER_AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 # USER_AGENT = 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
 
@@ -60,9 +62,11 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
-#    'scrapy.extensions.telnet.TelnetConsole': None,
-#}
+MYEXT_ENABLED = True
+EXTENSIONS = {
+   # 'scrapy.extensions.telnet.TelnetConsole': None,
+   'general.extension.FailLogger': None,
+}
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html

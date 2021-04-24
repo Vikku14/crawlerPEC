@@ -1,14 +1,22 @@
 import scrapy
 import pandas as pd
+import math
 from ..items import GeneralItem
 import requests
-# from collections import defaultdict
+from scrapy.spidermiddlewares.httperror import HttpError
+from twisted.internet.error import DNSLookupError, ConnectError
+from twisted.internet.error import TimeoutError, TCPTimedOutError
+
 
 class WebsitesSpider(scrapy.Spider):
     name = 'websites'
+
     start_urls = list()
+
     row_number = 1
+
     academician = list()
+
     academician_data = {
     'Name':['No data'],
     'h2':['No data'],
@@ -18,9 +26,13 @@ class WebsitesSpider(scrapy.Spider):
     'h6':['No data'],
     'url':''
     }
-    # academician_data = defaultdict(list)
-    print(academician_data)
-    file = '../Chicago/chicago.xlsx'
+
+
+    file = '../stanford/stanford.xlsx'
+    # file = '../Imperial/imperial.xlsx'
+    # file = '../ETH/eth.xlsx'
+    # file = '../Chicago/chicago.xlsx'
+
     data = pd.read_excel(file, usecols=['Name','URL'],
                         index_col = 0)
 
@@ -30,18 +42,21 @@ class WebsitesSpider(scrapy.Spider):
 
     for i, row in data_first.iterrows():
         row0 = row[0].split(',')
-        start_urls = list(map(str.strip, row0))
+        for r in row0:
+            if not r.startswith('file://'):
+                start_urls.append(r.strip())
+        # start_urls = list(map(str.strip, row0))
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
     no_of_rows = int(data.shape[0])
 
-    handle_httpstatus_list = [404, 500, 999, 301, 302]
+    handle_httpstatus_list = [301, 302, 307, 401, 403, 404, 410, 500, 502, 999]
 
     def parse(self, response):
-        print("Start --> row_urls", self.row_urls)
+        print("\n-----------------------------------\nStart --> row_urls", self.row_urls,end="\n\n")
         print("current URL: ",response.request.url)
-        print("Status: ",response.status)
+        print("Status: ",response.status,end="\n\n")
         try:                                                                                  # Handling redirection
             redirect_url = response.request.meta['redirect_urls'][0].split("://")[1]
             print("url history: ",redirect_url)
@@ -73,7 +88,7 @@ class WebsitesSpider(scrapy.Spider):
                 item['h5'] = ['No data']
                 item['h6'] = ['No data']
                 # yield item
-            elif response.status != 500:
+            elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
                 name = list(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name')]/text()").extract()))
                 if not name:
                     name = ['No data']
@@ -106,10 +121,9 @@ class WebsitesSpider(scrapy.Spider):
                 item['h6'] = h6
                 # yield item
             self.academician.append(item)                                             # Storing the data fetched by all URLs for each academician.
-            # print(self.academician)
-            print(self.academician)
+
             self.row_urls[response.request.url.split("://")[1]] = True
-            print("before enterting: ", self.row_urls)
+            print("\nbefore enterting: ", self.row_urls)
             if all(value == True for value in self.row_urls.values()):
                 print("entered into all True block")
                 for element in self.academician:                                        # Comparing the data fetched in previous step.
@@ -153,25 +167,38 @@ class WebsitesSpider(scrapy.Spider):
                 self.initialize_academician_data()
 
                 # fetch next row of excel file
-                print("row_number",self.row_number)
+
+                print("\n\t-------------------")
+                print("\t-------------------")
+                print("\t|| row number",self.row_number," ||")
+
+                print("\t-------------------")
+                print("\t-------------------\n")
                 # print("Total Rows",self.no_of_rows)
-                if self.row_number <= self.no_of_rows:
+                if self.row_number < self.no_of_rows:
 
                     data_row = self.data.iloc[[self.row_number]]
-
+                    print(pd.isna(data_row['URL']) == True)
                     for i, row in data_row.iterrows():
                         row0 = row[0].split(',')
-                        self.row_urls_0 = list(map(str.strip, row0))
+                        self.row_urls_0 = list()
+                        for rk in row0:
+                            if not rk.startswith('file://'):
+                                self.row_urls_0.append(rk.strip())
+
+                        # self.row_urls_0 = list(map(str.strip, row0))
                         print("row_urls_0", self.row_urls_0)
                         row1 = [row.split("://")[1] for row in self.row_urls_0 if row]
                         # row_urls = list(map(str.strip, row1))
                         self.row_urls = dict.fromkeys(row1, False)
 
-                    print("row_urls", self.row_urls)
+                    print("row_urls", self.row_urls,end="\n\n")
                     for link in self.row_urls_0:
                         if link:
                             print("link "+str(link))
-                            yield response.follow(link, callback=self.parse)
+                            yield response.follow(link, callback=self.parse,errback=self.errorback)
+                    print("done with links")
+
                     self.row_number += 1
 
 
@@ -190,3 +217,37 @@ class WebsitesSpider(scrapy.Spider):
     def Linkedin_crawler(self, response):
         print("inside fucntion",response)
         return None
+
+    def errorback(self, failure):
+        # log all failures
+        self.logger.error(repr(failure))
+
+        # in case you want to do something special for some errors,
+        # you may need the failure's type:
+
+        if failure.check(HttpError):
+            # these exceptions come from HttpError spider middleware
+            # you can get the non-200 response
+            response = failure.value.response
+            self.logger.error('HttpError on %s', response.url)
+
+        elif failure.check(DNSLookupError):
+            # this is the original request
+            request = failure.request
+            self.row_urls[request.url.split("://")[1]] = True
+            print(self.row_urls, end="\n\n")
+            self.logger.error('DNSLookupError on %s', request.url)
+
+        elif failure.check(TimeoutError, TCPTimedOutError):
+            request = failure.request
+            self.row_urls[request.url.split("://")[1]] = True
+            print(self.row_urls, end="\n\n")
+            self.logger.error('TimeoutError on %s', request.url)
+            self.row_number += 1
+
+
+        elif failure.check(ConnectError):
+            request = failure.request
+            self.row_urls[request.url.split("://")[1]] = True
+            print(self.row_urls, end="\n\n")
+            self.logger.error('ConnectError on %s', request.url)
