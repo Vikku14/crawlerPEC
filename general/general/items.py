@@ -24,9 +24,30 @@ class GeneralItem(scrapy.Item):
     # name = scrapy.Field()
     url = scrapy.Field()
     Name = scrapy.Field()
-    h2 = scrapy.Field()
-    h3 = scrapy.Field()
-    h4 = scrapy.Field()
+    designation = scrapy.Field()
+    designation_detail = scrapy.Field()
+    major_area = scrapy.Field()
+    contact = scrapy.Field()
+    education = scrapy.Field()
+    University = scrapy.Field()
+    address = scrapy.Field()
+    image = scrapy.Field()
     h5 = scrapy.Field()
     h6 = scrapy.Field()
     # name = scrapy.Field()
+
+
+'''
+Name
+University Name
+Email
+address
+Designation
+Designation Details
+Department Name
+Major Area
+DOB
+Mobile No.
+Image Url
+Type --> PHD student
+'''

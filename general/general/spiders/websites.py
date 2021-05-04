@@ -16,28 +16,23 @@ class WebsitesSpider(scrapy.Spider):
     row_number = 1
 
     academician = list()
+    fields = list()
 
-    academician_data = {
-    'Name':['No data'],
-    'h2':['No data'],
-    'h3':['No data'],
-    'h4':['No data'],
-    'h5':['No data'],
-    'h6':['No data'],
-    'url':''
-    }
+    def __init__(self):
+        self.initialize_academician_data()
+        self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'h5', 'h6']
 
 
-    file = '../stanford/stanford.xlsx'
+    # file = '../stanford/stanford.xlsx'
     # file = '../Imperial/imperial.xlsx'
     # file = '../ETH/eth.xlsx'
-    # file = '../Chicago/chicago.xlsx'
+    file = '../Chicago/chicago.xlsx'
 
     data = pd.read_excel(file, usecols=['Name','URL'],
-                        index_col = 0)
+                         index_col = 0, skiprows =[2])
 
     # fetch 1st row of every excel file >> start_urls
-
+    print(data)
     data_first = data.iloc[[0]]
 
     for i, row in data_first.iterrows():
@@ -51,20 +46,35 @@ class WebsitesSpider(scrapy.Spider):
 
     no_of_rows = int(data.shape[0])
 
-    handle_httpstatus_list = [301, 302, 307, 401, 403, 404, 410, 500, 502, 999]
+    handle_httpstatus_list = [302, 307, 401, 403, 404, 410, 500, 502, 999]
+
+    def initialize_academician_data(self):
+        self.academician_data = {
+        'Name':['No data'],
+        'designation':['No data'],
+        'designation_detail':['No data'],
+        'major_area':['No data'],
+        'University':['No data'],
+        'address':['No data'],
+        'contact':['No data'],
+        'education':['No data'],
+        'image':['No data'],
+        'h5':['No data'],
+        'h6':['No data'],
+        'url':''
+        }
 
     def parse(self, response):
         print("\n-----------------------------------\nStart --> row_urls", self.row_urls,end="\n\n")
         print("current URL: ",response.request.url)
         print("Status: ",response.status,end="\n\n")
-        try:                                                                                  # Handling redirection
+        try:
             redirect_url = response.request.meta['redirect_urls'][0].split("://")[1]
             print("url history: ",redirect_url)
             self.row_urls[response.request.url.split("://")[1]] = self.row_urls.pop(redirect_url)
             print(self.row_urls)
         except Exception as e:
             pass
-
 
         if self.row_urls[response.request.url.split("://")[1]] == False:
             r = response.request.url
@@ -82,25 +92,53 @@ class WebsitesSpider(scrapy.Spider):
             elif response.status == 404:
                 item['url'] = r
                 item['Name'] = ["404: Page not found"]
-                item['h2'] = ['No data']
-                item['h3'] = ['No data']
-                item['h4'] = ['No data']
+                item['designation'] = ['No data']
+                item['designation_detail'] = ['No data']
+                item['major_area'] = ['No data']
+                item['address'] = ['No data']
+                item['contact'] = ['No data']
+                item['education'] = ['No data']
+                item['image'] = ['No data']
                 item['h5'] = ['No data']
                 item['h6'] = ['No data']
                 # yield item
+
+                
             elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
-                name = list(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name')]/text()").extract()))
+
+                # name = list(set(map(str.strip, response.xpath("/html/head/meta[contains(@name,'name') or (contains(@property,'name') and not(contains(@property,'site_name'))) or contains(@name,'title')]/@content").extract())))
+                name = list(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract()))
                 if not name:
                     name = ['No data']
-                h2 = list(map(str.strip, response.css('h2 *::text').extract()))
-                if not h2:
-                    h2 = ['No data']
-                h3 = list(map(str.strip, response.css('h3 *::text').extract()))
-                if not h3:
-                    h3 = ['No data']
-                h4 = list(map(str.strip, response.css('h4 *::text').extract()))
-                if not h4:
-                    h4 = ['No data']
+
+                designation = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][(contains(@class, "title") or contains(@id, "title") or contains(@itemprop, "title")) and (contains(@class, "job") or contains(@itemprop,"job") )]/text()').extract())))
+                if not designation:
+                    designation = ['No data']
+
+                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content').extract())))
+                if not designation_detail:
+                    designation_detail = ['No data']
+
+                major_area = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][contains(@class, "special") or contains(@id, "special") or contains(@itemprop, "special")]/text()').extract())))
+                if not major_area:
+                    major_area = ['No data']
+
+                address = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]//*/text()').extract())))
+                if not address:
+                    address = ['No data']
+
+                contact = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]//*/text()').extract())))
+                if not contact:
+                    contact = ['No data']
+
+                education = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]//*/text()').extract())))
+                if not education:
+                    education = ['No data']
+
+                image = list(set(map(str.strip, response.xpath('/html/head/meta[contains(@name,"image") or contains(@property,"image")]/@content').extract())))
+                if not image:
+                    image = ['No data']
+
                 h5 = list(map(str.strip, response.css('h5 *::text').extract()))
                 if not h5:
                     h5 = ['No data']
@@ -114,9 +152,13 @@ class WebsitesSpider(scrapy.Spider):
 
                 item['url'] = r
                 item['Name'] = name
-                item['h2'] = h2
-                item['h3'] = h3
-                item['h4'] = h4
+                item['designation'] = designation
+                item['designation_detail'] = designation_detail
+                item['major_area'] = major_area
+                item['address'] = address
+                item['contact'] = contact
+                item['education'] = education
+                item['image'] = image
                 item['h5'] = h5
                 item['h6'] = h6
                 # yield item
@@ -125,61 +167,36 @@ class WebsitesSpider(scrapy.Spider):
             self.row_urls[response.request.url.split("://")[1]] = True
             print("\nbefore enterting: ", self.row_urls)
             if all(value == True for value in self.row_urls.values()):
-                print("entered into all True block")
-                for element in self.academician:                                        # Comparing the data fetched in previous step.
-                    if element:
-                        if element['Name'] not in [['404: Page not found'], ['No data']]:
-                            if self.academician_data['Name'] == ['No data']:
-                                self.academician_data['Name'] = element['Name']
-                            else:
-                                self.academician_data['Name'].extend(element['Name'])
-                        if element['h2'] != ['No data']:
-                            if self.academician_data['h2'] == ['No data']:
-                                self.academician_data['h2'] = element['h2']
-                            else:
-                                self.academician_data['h2'].extend(element['h2'])
-                        if element['h3'] != ['No data']:
-                            if self.academician_data['h3'] == ['No data']:
-                                self.academician_data['h3'] = element['h3']
-                            else:
-                                self.academician_data['h3'].extend(element['h3'])
-                        if element['h4'] != ['No data']:
-                            if self.academician_data['h4'] == ['No data']:
-                                self.academician_data['h4'] = element['h4']
-                            else:
-                                self.academician_data['h4'].extend(element['h4'])
-                        if element['h5'] != ['No data']:
-                            if self.academician_data['h5'] == ['No data']:
-                                self.academician_data['h5'] = element['h5']
-                            else:
-                                self.academician_data['h5'].extend(element['h5'])
-                        if element['h6'] != ['No data']:
-                            if self.academician_data['h6'] == ['No data']:
-                                self.academician_data['h6'] = element['h6']
-                            else:
-                                self.academician_data['h6'].extend(element['h6'])
 
-                        self.academician_data['url'] = self.academician_data['url']+", "+element['url']
-                    # print(self.academician_data)
+                self.all_true_block()
 
                 yield self.academician_data
+
+                print("\n...................................................")
+                for key, value in self.academician_data.items():
+                    print("{0:>20} ......... {1}".format(key,value))
                 self.academician = list() # empty list for each academician.
                 self.initialize_academician_data()
 
-                # fetch next row of excel file
 
-                print("\n\t-------------------")
-                print("\t-------------------")
-                print("\t|| row number",self.row_number," ||")
+                self.print_row_number()
 
-                print("\t-------------------")
-                print("\t-------------------\n")
                 # print("Total Rows",self.no_of_rows)
-                if self.row_number < self.no_of_rows:
+                # fetch next row of excel file
+                if self.row_number < 4: # self.no_of_rows
 
                     data_row = self.data.iloc[[self.row_number]]
-                    print(pd.isna(data_row['URL']) == True)
+                    # print(data_row)
                     for i, row in data_row.iterrows():
+                        # print(data_row)
+                        # if isinstance(row[0], float):
+                        #     print("skipping row")
+                        #     self.row_number += 1
+                        #     data_row = self.data.iloc[[self.row_number]]
+                        #     print(data_row)
+                        #     continue
+
+                        print(row[0], type(row[0]))
                         row0 = row[0].split(',')
                         self.row_urls_0 = list()
                         for rk in row0:
@@ -203,22 +220,69 @@ class WebsitesSpider(scrapy.Spider):
 
 
 
-    def initialize_academician_data(self):
-        self.academician_data = {
-        'Name':['No data'],
-        'h2':['No data'],
-        'h3':['No data'],
-        'h4':['No data'],
-        'h5':['No data'],
-        'h6':['No data'],
-        'url':''
-        }
+
+    def print_row_number(self):
+
+        print("\n\t\t-------------------")
+        print("\t\t-------------------")
+        print("\t\t|| row number",self.row_number," ||")
+
+        print("\t\t-------------------")
+        print("\t\t-------------------\n")
+
+    def all_true_block(self):
+
+        '''
+        Comparing the data of fetched URLS from one row.
+        '''
+
+        print("entered into all True block")
+        for element in self.academician:
+            if element:
+                # print("before conversion")
+                # print(element['Name'])
+                if element['Name'] != ['No data']:
+                    # print("inside IF")
+                    # print(element['Name'])
+                    if self.academician_data['Name'] == ['No data']:
+                        self.academician_data['Name'] = element['Name']
+                    elif element['Name'] != ['404: Page not found']:
+                        self.academician_data['Name'].extend(element['Name'])
+                        try:
+                            self.academician_data['Name'].remove('404: Page not found')
+                        except Exception:
+                            pass
+
+                for field in self.fields:   # Comparing all other fields
+
+                    if element[field] != ['No data']:
+                        if self.academician_data[field] == ['No data']:
+                            self.academician_data[field] = element[field]
+                        else:
+                            self.academician_data[field].extend(element[field])
+
+
+                self.academician_data['url'] = self.academician_data['url']+", "+element['url']
+            # print(self.academician_data)
+        self.academician_data['University'] = self.file.split('/')[1]
+
 
     def Linkedin_crawler(self, response):
-        print("inside fucntion",response)
+
+        '''
+        LinkdedIn crawler
+        '''
+
+        print("LinkdedIn Crawler COMMING SOON",response)
         return None
 
+
     def errorback(self, failure):
+
+        '''
+        Error handling function
+        '''
+
         # log all failures
         self.logger.error(repr(failure))
 
