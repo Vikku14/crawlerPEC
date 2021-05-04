@@ -13,7 +13,6 @@ class WebsitesSpider(scrapy.Spider):
 
     start_urls = list()
 
-    row_number = 1
 
     academician = list()
     fields = list()
@@ -44,9 +43,14 @@ class WebsitesSpider(scrapy.Spider):
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    no_of_rows = int(data.shape[0])
 
-    handle_httpstatus_list = [302, 307, 401, 403, 404, 410, 500, 502, 999]
+    row_number = 11
+    no_of_rows = 15
+
+
+    # no_of_rows = int(data.shape[0])
+
+    handle_httpstatus_list = [307, 401, 403, 404, 410, 500, 502, 999]
 
     def initialize_academician_data(self):
         self.academician_data = {
@@ -103,19 +107,19 @@ class WebsitesSpider(scrapy.Spider):
                 item['h6'] = ['No data']
                 # yield item
 
-                
+
             elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
 
                 # name = list(set(map(str.strip, response.xpath("/html/head/meta[contains(@name,'name') or (contains(@property,'name') and not(contains(@property,'site_name'))) or contains(@name,'title')]/@content").extract())))
-                name = list(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract()))
+                name = list(set(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract())))
                 if not name:
                     name = ['No data']
-
+                print(name)
                 designation = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][(contains(@class, "title") or contains(@id, "title") or contains(@itemprop, "title")) and (contains(@class, "job") or contains(@itemprop,"job") )]/text()').extract())))
                 if not designation:
                     designation = ['No data']
 
-                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content').extract())))
+                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content | //h2/text()').extract())))
                 if not designation_detail:
                     designation_detail = ['No data']
 
@@ -135,7 +139,21 @@ class WebsitesSpider(scrapy.Spider):
                 if not education:
                     education = ['No data']
 
-                image = list(set(map(str.strip, response.xpath('/html/head/meta[contains(@name,"image") or contains(@property,"image")]/@content').extract())))
+                pre_image = list(set(map(str.strip, response.xpath('/html/head/meta[contains(@name,"{0}") or contains(@property,"{0}")]/@content'.format("image")).extract())))
+                for n in name:
+                    print(n)
+                    if n:
+                        pre_image.append(response.xpath('//img[contains(translate(@title, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"),"{0}")]/@src'.format(n.lower())).extract())
+                        print(pre_image)
+                image = list()
+                for img in pre_image:
+                    if img:
+                        if isinstance(img, list):
+                            for y in img:
+                                image.append(y)
+                        else:
+                            image.append(img)
+
                 if not image:
                     image = ['No data']
 
@@ -183,7 +201,7 @@ class WebsitesSpider(scrapy.Spider):
 
                 # print("Total Rows",self.no_of_rows)
                 # fetch next row of excel file
-                if self.row_number < 4: # self.no_of_rows
+                if self.row_number < self.no_of_rows:
 
                     data_row = self.data.iloc[[self.row_number]]
                     # print(data_row)
