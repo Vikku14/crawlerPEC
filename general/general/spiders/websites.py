@@ -16,10 +16,12 @@ class WebsitesSpider(scrapy.Spider):
 
     academician = list()
     fields = list()
+    url_status = dict()
 
     def __init__(self):
         self.initialize_academician_data()
         self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'h5', 'h6']
+
 
 
     # file = '../stanford/stanford.xlsx'
@@ -44,8 +46,8 @@ class WebsitesSpider(scrapy.Spider):
     row_urls = dict.fromkeys(row_urls_0, False)
 
 
-    row_number = 11
-    no_of_rows = 15
+    row_number = 15
+    no_of_rows = 30
 
 
     # no_of_rows = int(data.shape[0])
@@ -72,6 +74,9 @@ class WebsitesSpider(scrapy.Spider):
         print("\n-----------------------------------\nStart --> row_urls", self.row_urls,end="\n\n")
         print("current URL: ",response.request.url)
         print("Status: ",response.status,end="\n\n")
+
+        self.url_status[response.request.url] = response.status
+
         try:
             redirect_url = response.request.meta['redirect_urls'][0].split("://")[1]
             print("url history: ",redirect_url)
@@ -119,7 +124,7 @@ class WebsitesSpider(scrapy.Spider):
                 if not designation:
                     designation = ['No data']
 
-                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content | //h2/text()').extract())))
+                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content | //h2//*/text() | //h2/text()').extract())))
                 if not designation_detail:
                     designation_detail = ['No data']
 
@@ -127,15 +132,18 @@ class WebsitesSpider(scrapy.Spider):
                 if not major_area:
                     major_area = ['No data']
 
-                address = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]//*/text()').extract())))
+                address = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]/text() | '\
+                                                                 '(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]//*/text()').extract())))
                 if not address:
                     address = ['No data']
 
-                contact = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]//*/text()').extract())))
+                contact = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]/text() |'
+                                                                 '(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]//*/text()').extract())))
                 if not contact:
                     contact = ['No data']
 
-                education = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]//*/text()').extract())))
+                education = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]/text() | '\
+                                                                    '(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]//*/text()').extract())))
                 if not education:
                     education = ['No data']
 
@@ -193,7 +201,14 @@ class WebsitesSpider(scrapy.Spider):
                 print("\n...................................................")
                 for key, value in self.academician_data.items():
                     print("{0:>20} ......... {1}".format(key,value))
+                print("\n...................................................\n")
+                for key, value in self.url_status.items():
+                    print("\t| {0} ......... {1}".format(key,value))
+
+
+
                 self.academician = list() # empty list for each academician.
+                self.url_status = dict()
                 self.initialize_academician_data()
 
 
