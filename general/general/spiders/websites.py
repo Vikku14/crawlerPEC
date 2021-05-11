@@ -20,7 +20,7 @@ class WebsitesSpider(scrapy.Spider):
 
     def __init__(self):
         self.initialize_academician_data()
-        self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'h5', 'h6']
+        self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'email', 'h6']
 
 
 
@@ -46,8 +46,8 @@ class WebsitesSpider(scrapy.Spider):
     row_urls = dict.fromkeys(row_urls_0, False)
 
 
-    row_number = 15
-    no_of_rows = 30
+    row_number = 1
+    no_of_rows = 50
 
 
     # no_of_rows = int(data.shape[0])
@@ -65,7 +65,7 @@ class WebsitesSpider(scrapy.Spider):
         'contact':['No data'],
         'education':['No data'],
         'image':['No data'],
-        'h5':['No data'],
+        'email':['No data'],
         'h6':['No data'],
         'url':''
         }
@@ -94,8 +94,8 @@ class WebsitesSpider(scrapy.Spider):
                 yield scrapy.Request(r, callback=self.Linkedin_crawler)
                 # for ar in self.Linkedin_crawler(response):
                 #     yield ar
-            elif response.request.url.endswith(".pdf"):  # TODO: Handle PDFs
-                print("pdf found")
+            elif ".pdf" in response.request.url:  # TODO: Handle PDFs
+                print("PDF found: Ignoring")
                 self.row_urls[response.request.url.split("://")[1]] = True
                 print(self.row_urls)
             elif response.status == 404:
@@ -108,7 +108,7 @@ class WebsitesSpider(scrapy.Spider):
                 item['contact'] = ['No data']
                 item['education'] = ['No data']
                 item['image'] = ['No data']
-                item['h5'] = ['No data']
+                item['email'] = ['No data']
                 item['h6'] = ['No data']
                 # yield item
 
@@ -116,7 +116,7 @@ class WebsitesSpider(scrapy.Spider):
             elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
 
                 # name = list(set(map(str.strip, response.xpath("/html/head/meta[contains(@name,'name') or (contains(@property,'name') and not(contains(@property,'site_name'))) or contains(@name,'title')]/@content").extract())))
-                name = list(set(map(str.strip, response.xpath("//h1/text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract())))
+                name = list(set(map(str.strip, response.xpath("//h1/descendant-or-self::*[not(self::style)] /text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract())))
                 if not name:
                     name = ['No data']
                 print(name)
@@ -124,50 +124,55 @@ class WebsitesSpider(scrapy.Spider):
                 if not designation:
                     designation = ['No data']
 
-                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content | //h2//*/text() | //h2/text()').extract())))
+                designation_detail = list(set(map(str.strip, response.xpath('/html/head/meta[@name="description"]/@content | //h2/descendant-or-self::*/text()').extract())))
                 if not designation_detail:
                     designation_detail = ['No data']
 
                 major_area = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][contains(@class, "special") or contains(@id, "special") or contains(@itemprop, "special")]/text()').extract())))
+                print(" >>  major_area", major_area)
                 if not major_area:
                     major_area = ['No data']
 
-                address = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]/text() | '\
-                                                                 '(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]//*/text()').extract())))
+                print(" >>  major_area", major_area)
+
+                address = list(set(map(str.strip, response.xpath('//address/descendant-or-self::*/text() | ' \
+                                                                '(//*)[not(ancestor::ul)][contains(@class, "address") or contains(@id, "address") or contains(@itemprop, "address")]/descendant-or-self::*/text()').extract())))
                 if not address:
                     address = ['No data']
 
-                contact = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]/text() |'
-                                                                 '(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]//*/text()').extract())))
+                contact = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "contact") or contains(@id, "contact") or contains(@itemprop, "contact")]/descendant-or-self::*/text()').extract())))
                 if not contact:
                     contact = ['No data']
 
-                education = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]/text() | '\
-                                                                    '(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]//*/text()').extract())))
+                education = list(set(map(str.strip, response.xpath('(//*)[contains(@class, "education") or contains(@id, "education") or contains(@itemprop, "education")]/descendant-or-self::*/text()').extract())))
                 if not education:
                     education = ['No data']
 
                 pre_image = list(set(map(str.strip, response.xpath('/html/head/meta[contains(@name,"{0}") or contains(@property,"{0}")]/@content'.format("image")).extract())))
-                for n in name:
-                    print(n)
-                    if n:
-                        pre_image.append(response.xpath('//img[contains(translate(@title, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"),"{0}")]/@src'.format(n.lower())).extract())
-                        print(pre_image)
+                for each_name in name:
+                    print(each_name)
+                    if each_name:
+                        for partial_name in each_name.split(' '):
+                            pre_image.append(response.xpath('//img[contains(translate(@title, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"),"{0}") or '\
+                            'contains(translate(@src, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"),"{0}")]/@src'.format(partial_name.lower())).extract())
+                        # print("pre_image",pre_image)
                 image = list()
                 for img in pre_image:
                     if img:
                         if isinstance(img, list):
                             for y in img:
-                                image.append(y)
+                                image.append(requests.compat.urljoin(response.request.url, y))
                         else:
-                            image.append(img)
+                            image.append(requests.compat.urljoin(response.request.url, img))
 
                 if not image:
                     image = ['No data']
 
-                h5 = list(map(str.strip, response.css('h5 *::text').extract()))
-                if not h5:
-                    h5 = ['No data']
+                email = list(set(map(str.strip, response.xpath('//a[contains(@href, "mailto")]/@href |' \
+                '(//*)[not(ancestor::ul) and not(ancestor::table)][contains(@class, "mail") or contains(@id, "mail") or contains(@itemprop, "mail")]/descendant-or-self::*/text()').extract())))
+                print("email ",email)
+                if not email:
+                    email = ['No data']
                 h6 = list(map(str.strip, response.css('h6 *::text').extract()))
                 if not h6:
                     h6 = ['No data']
@@ -185,7 +190,7 @@ class WebsitesSpider(scrapy.Spider):
                 item['contact'] = contact
                 item['education'] = education
                 item['image'] = image
-                item['h5'] = h5
+                item['email'] = email
                 item['h6'] = h6
                 # yield item
             self.academician.append(item)                                             # Storing the data fetched by all URLs for each academician.
@@ -196,14 +201,19 @@ class WebsitesSpider(scrapy.Spider):
 
                 self.all_true_block()
 
-                yield self.academician_data
 
-                print("\n...................................................")
+                print("\n................................................................................................................................")
                 for key, value in self.academician_data.items():
-                    print("{0:>20} ......... {1}".format(key,value))
-                print("\n...................................................\n")
+                    if key in self.fields:
+                        self.academician_data[key] = list(set(value))
+                    print("{0:>20} ......... {1}".format(key,self.academician_data[key]))
+                print("\n................................................................................................................................\n")
+
                 for key, value in self.url_status.items():
                     print("\t| {0} ......... {1}".format(key,value))
+                print()
+
+                yield self.academician_data
 
 
 
@@ -289,13 +299,13 @@ class WebsitesSpider(scrapy.Spider):
                 for field in self.fields:   # Comparing all other fields
 
                     if element[field] != ['No data']:
-                        if self.academician_data[field] == ['No data']:
+                        if self.academician_data[field] == ['No data'] and element[field] != ['']:
                             self.academician_data[field] = element[field]
                         else:
                             self.academician_data[field].extend(element[field])
 
 
-                self.academician_data['url'] = self.academician_data['url']+", "+element['url']
+                self.academician_data['url'] = self.academician_data['url']+element['url']+"\n"
             # print(self.academician_data)
         self.academician_data['University'] = self.file.split('/')[1]
 

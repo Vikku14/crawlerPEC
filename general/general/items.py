@@ -28,11 +28,11 @@ class GeneralItem(scrapy.Item):
     designation_detail = scrapy.Field()
     major_area = scrapy.Field()
     contact = scrapy.Field()
+    email = scrapy.Field()
     education = scrapy.Field()
     University = scrapy.Field()
     address = scrapy.Field()
     image = scrapy.Field()
-    h5 = scrapy.Field()
     h6 = scrapy.Field()
     # name = scrapy.Field()
 
