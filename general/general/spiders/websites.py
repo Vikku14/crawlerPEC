@@ -20,7 +20,7 @@ class WebsitesSpider(scrapy.Spider):
 
     def __init__(self):
         self.initialize_academician_data()
-        self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'email', 'h6']
+        self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'email', 'Phone_No']
 
 
 
@@ -47,7 +47,7 @@ class WebsitesSpider(scrapy.Spider):
 
 
     row_number = 1
-    no_of_rows = 50
+    no_of_rows = 5
 
 
     # no_of_rows = int(data.shape[0])
@@ -66,7 +66,7 @@ class WebsitesSpider(scrapy.Spider):
         'education':['No data'],
         'image':['No data'],
         'email':['No data'],
-        'h6':['No data'],
+        'Phone_No':['No data'],
         'url':''
         }
 
@@ -109,7 +109,7 @@ class WebsitesSpider(scrapy.Spider):
                 item['education'] = ['No data']
                 item['image'] = ['No data']
                 item['email'] = ['No data']
-                item['h6'] = ['No data']
+                item['Phone_No'] = ['No data']
                 # yield item
 
 
@@ -173,9 +173,10 @@ class WebsitesSpider(scrapy.Spider):
                 print("email ",email)
                 if not email:
                     email = ['No data']
-                h6 = list(map(str.strip, response.css('h6 *::text').extract()))
-                if not h6:
-                    h6 = ['No data']
+                Phone_No = list(set(map(str.strip, response.xpath(
+                    '(//*)[contains(@class, "phone") or contains(@id, "phone") or contains(@itemprop, "phone")]/descendant-or-self::*/text()').extract())))
+                if not Phone_No:
+                    Phone_No = ['No data']
                 # print(self.data[self.data['URL'].str.contains(str(r))])
 
                 # extracting the Name
@@ -191,7 +192,7 @@ class WebsitesSpider(scrapy.Spider):
                 item['education'] = education
                 item['image'] = image
                 item['email'] = email
-                item['h6'] = h6
+                item['Phone_No'] = Phone_No
                 # yield item
             self.academician.append(item)                                             # Storing the data fetched by all URLs for each academician.
 
@@ -315,8 +316,20 @@ class WebsitesSpider(scrapy.Spider):
         '''
         LinkdedIn crawler
         '''
+        print("LinkdedIn Crawler\n",response)
+        
+        from linkedin_api import Linkedin
 
-        print("LinkdedIn Crawler COMMING SOON",response)
+
+        # Authenticate using any Linkedin account credentials
+        api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
+
+        # GET a profile
+        profile = api.get_profile('amrit-pal-singh-7ab470128')
+        print(profile)
+        # GET a profiles contact info
+        # contact_info = api.get_profile_contact_info('billy-g')
+        # print(contact_info)
         return None
 
 

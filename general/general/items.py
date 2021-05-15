@@ -33,7 +33,7 @@ class GeneralItem(scrapy.Item):
     University = scrapy.Field()
     address = scrapy.Field()
     image = scrapy.Field()
-    h6 = scrapy.Field()
+    Phone_No = scrapy.Field()
     # name = scrapy.Field()
 
 
