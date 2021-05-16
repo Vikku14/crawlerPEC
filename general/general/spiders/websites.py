@@ -1,3 +1,4 @@
+from linkedin_api import Linkedin
 import scrapy
 import pandas as pd
 import math
@@ -47,7 +48,7 @@ class WebsitesSpider(scrapy.Spider):
 
 
     row_number = 1
-    no_of_rows = 5
+    no_of_rows = 2
 
 
     # no_of_rows = int(data.shape[0])
@@ -317,19 +318,18 @@ class WebsitesSpider(scrapy.Spider):
         LinkdedIn crawler
         '''
         print("LinkdedIn Crawler\n",response)
-        
-        from linkedin_api import Linkedin
 
+
+        from linkedin_api import Linkedin
 
         # Authenticate using any Linkedin account credentials
         api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
-
+        profile_id = response.request.url.split("/")[-1]
         # GET a profile
-        profile = api.get_profile('amrit-pal-singh-7ab470128')
-        print(profile)
-        # GET a profiles contact info
-        # contact_info = api.get_profile_contact_info('billy-g')
-        # print(contact_info)
+        profile = api.get_profile(profile_id)
+        for key, value in profile.items():
+            print("{0:>20} ......... {1}".format(key,value))
+
         return None
 
 
