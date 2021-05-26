@@ -21,7 +21,15 @@ class WebsitesSpider(scrapy.Spider):
 
     def __init__(self):
         self.initialize_academician_data()
-        self.fields = ['designation', 'designation_detail', 'major_area', 'address', 'contact', 'education', 'image', 'email', 'Phone_No']
+        self.fields = ['designation', 'designation_detail', 'major_area', 'address',
+                       'contact', 'education', 'doctrate_degree', 'doctrate_discipline', 'doctrate_passing_year',
+                       'doctrate_university_name', 'post_graduation_degree', 'post_graduation_discipline', 'post_graduation_passing_year',
+                       'post_graduation_university_name', 'graduation_degree', 'graduation_discipline', 'graduation_passing_year', 
+                       'graduation_university_name', 'experience', 'image', 'email', 'Phone_No']
+
+        self.doctrate_list = ['doctor', 'ph.d']
+        self.post_graduation_list = ['master']
+        self.graduation_list = ['ba', 'bachelor']
 
 
 
@@ -47,11 +55,11 @@ class WebsitesSpider(scrapy.Spider):
     row_urls = dict.fromkeys(row_urls_0, False)
 
 
-    row_number = 1
-    no_of_rows = 2
+    row_number = 66
+    # no_of_rows = 
 
 
-    # no_of_rows = int(data.shape[0])
+    no_of_rows = int(data.shape[0])
 
     handle_httpstatus_list = [307, 401, 403, 404, 410, 500, 502, 999]
 
@@ -65,6 +73,26 @@ class WebsitesSpider(scrapy.Spider):
         'address':['No data'],
         'contact':['No data'],
         'education':['No data'],
+
+        'doctrate_degree': ['No data'],
+        'doctrate_discipline': ['No data'],
+        'doctrate_passing_year': ['No data'],
+        'doctrate_university_name': ['No data'],
+
+
+        'post_graduation_degree': ['No data'],
+        'post_graduation_discipline': ['No data'],
+        'post_graduation_passing_year': ['No data'],
+        'post_graduation_university_name': ['No data'],
+
+
+        'graduation_degree': ['No data'],
+        'graduation_discipline': ['No data'],
+        'graduation_passing_year': ['No data'],
+        'graduation_university_name': ['No data'],
+        
+        'experience': ['No data'],
+
         'image':['No data'],
         'email':['No data'],
         'Phone_No':['No data'],
@@ -90,16 +118,7 @@ class WebsitesSpider(scrapy.Spider):
             r = response.request.url
             item = GeneralItem()
 
-            if 'linkedin' in r:
-                print("linkedin URL")
-                yield scrapy.Request(r, callback=self.Linkedin_crawler)
-                # for ar in self.Linkedin_crawler(response):
-                #     yield ar
-            elif ".pdf" in response.request.url:  # TODO: Handle PDFs
-                print("PDF found: Ignoring")
-                self.row_urls[response.request.url.split("://")[1]] = True
-                print(self.row_urls)
-            elif response.status == 404:
+            if response.status == 404:
                 item['url'] = r
                 item['Name'] = ["404: Page not found"]
                 item['designation'] = ['No data']
@@ -108,10 +127,154 @@ class WebsitesSpider(scrapy.Spider):
                 item['address'] = ['No data']
                 item['contact'] = ['No data']
                 item['education'] = ['No data']
+
+                item['doctrate_degree'] = ['No data']
+                item['doctrate_discipline'] = ['No data']
+                item['doctrate_passing_year'] = ['No data']
+                item['doctrate_university_name'] = ['No data']
+
+                item['post_graduation_degree'] = ['No data']
+                item['post_graduation_discipline'] = ['No data']
+                item['post_graduation_passing_year'] = ['No data']
+                item['post_graduation_university_name'] = ['No data']
+
+                item['graduation_degree'] = ['No data']
+                item['graduation_discipline'] = ['No data']
+                item['graduation_passing_year'] = ['No data']
+                item['graduation_university_name'] = ['No data']
+
+                item['experience'] = ['No data']
+
                 item['image'] = ['No data']
                 item['email'] = ['No data']
                 item['Phone_No'] = ['No data']
-                # yield item
+                
+
+            elif 'linkedin' in r:
+                
+                '''
+                LinkdedIn crawler
+                '''
+
+                print("LinkdedIn Crawler\n", response)
+                
+                # partital initilizing item dict()
+               
+                item['graduation_degree'] = ['No data']
+                item['graduation_discipline'] = ['No data']
+                item['graduation_passing_year'] = ['No data']
+                item['graduation_university_name'] = ['No data']
+
+                item['doctrate_degree'] = ['No data']
+                item['doctrate_discipline'] = ['No data']
+                item['doctrate_passing_year'] = ['No data']
+                item['doctrate_university_name'] = ['No data']
+
+                item['post_graduation_degree'] = ['No data']
+                item['post_graduation_discipline'] = ['No data']
+                item['post_graduation_passing_year'] = ['No data']
+                item['post_graduation_university_name'] = ['No data']
+
+
+                item['education'] = ['No data']
+
+                # Authenticate using any Linkedin account credentials
+                api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
+                profile_id = r.split("/")[-1]
+
+                # GET a profile
+                profile = api.get_profile(profile_id)
+
+                if profile:  # To avoid 404 pages in linkedin
+                    for key, value in profile.items():
+                        print("{0:>20} ......... {1}".format(key, value))
+                    
+                    print("edun\n\n")
+                    if profile.get('education'):
+                        for edu in profile.get('education'):
+                            for key, value in edu.items():
+                                print("{0:>20} ......... {1}".format(key, value))
+                            print("\n\n")
+
+                    print("\nlatest experience\n\n")
+                    if profile.get('experience'):
+                        for key, value in profile['experience'][0].items():
+                            print("{0:>20} ......... {1}".format(key, value))
+                        print("\n\n")
+                    
+                    item['url'] = r
+
+                    item['Name'] = [profile.get('firstName')+" "+profile.get('lastName')]
+                    item['designation'] = [profile.get('headline')]
+                    item['designation_detail'] = ['No data']
+                    item['major_area'] = [profile.get('industryName', 'No data')]
+                    item['address'] = [profile.get('geoLocationName') + \
+                        ", " + profile.get('locationName')]
+                    item['contact'] = ['No data']
+
+                    for edu in profile.get('education'):
+                        for key, value in edu.items():
+                            if edu.get('degreeName') == None:
+                                if item['education'] == ['No data']:
+                                    item['education'] =  [edu.get('fieldOfStudy')+" "+edu.get('schoolName')]
+                                else:
+                                    item['education'].extend([edu.get('fieldOfStudy')+" "+edu.get('schoolName')])
+                                break
+                            if any(item in edu.get('degreeName').lower() for item in self.graduation_list):
+                                item['graduation_degree'] = [edu.get('degreeName')]
+                                item['graduation_discipline'] = [edu.get('fieldOfStudy')]
+                                item['graduation_passing_year'] = [str(edu.get('timePeriod').get('endDate').get('year'))]
+                                item['graduation_university_name'] = [edu.get('schoolName')]
+
+                            elif any(item in edu.get('degreeName').lower() for item in self.post_graduation_list):
+                                item['post_graduation_degree'] = [edu.get('degreeName')]
+                                item['post_graduation_discipline'] = [edu.get('fieldOfStudy')]
+                                item['post_graduation_passing_year'] = [str(edu.get('timePeriod').get('endDate').get('year'))]
+                                item['post_graduation_university_name'] = [edu.get('schoolName')]
+                                            
+                            elif any(item in edu.get('degreeName').lower() for item in self.doctrate_list):
+                                item['doctrate_degree'] = ['No data']
+                                item['doctrate_discipline'] = ['No data']
+                                item['doctrate_passing_year'] = ['No data']
+                                item['doctrate_university_name'] = ['No data']
+                                            
+                                
+                    
+
+                    if profile.get('experience'):
+                        latest_exp = profile['experience'][0] # considering latest experience
+                        
+                        item['experience'] = [latest_exp.get('title', '')+" at "+latest_exp.get('companyName', '')+', '+latest_exp.get('locationName', '')]
+                            
+                    else:
+                        item['experience'] = ['No data']
+
+
+                else:
+                    item['url'] = r
+
+                    item['Name'] = ['No data']
+                    item['designation'] = ['No data']
+                    item['designation_detail'] = ['No data']
+                    item['major_area'] = ['No data']
+                    item['address'] = ['No data']
+                    item['contact'] = ['No data']
+                    item['experience'] = ['No data']
+
+                item['image'] = ['No data']
+                item['email'] = ['No data']
+                item['Phone_No'] = ['No data']
+
+                    # yield scrapy.Request(r, callback=self.Linkedin_crawler)
+                    # for ar in self.Linkedin_crawler(response):
+                    #     yield ar
+                
+
+            elif ".pdf" in response.request.url:  # TODO: Handle PDFs
+                print("PDF found: Ignoring")
+                self.row_urls[response.request.url.split("://")[1]] = True
+                print(self.row_urls)
+            
 
 
             elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
@@ -191,6 +354,24 @@ class WebsitesSpider(scrapy.Spider):
                 item['address'] = address
                 item['contact'] = contact
                 item['education'] = education
+
+                item['doctrate_degree'] = ['No data']
+                item['doctrate_discipline'] = ['No data']
+                item['doctrate_passing_year'] = ['No data']
+                item['doctrate_university_name'] = ['No data']
+
+                item['post_graduation_degree'] = ['No data']
+                item['post_graduation_discipline'] = ['No data']
+                item['post_graduation_passing_year'] = ['No data']
+                item['post_graduation_university_name'] = ['No data']
+
+                item['graduation_degree'] = ['No data']
+                item['graduation_discipline'] = ['No data']
+                item['graduation_passing_year'] = ['No data']
+                item['graduation_university_name'] = ['No data']
+
+                item['experience'] = ['No data']
+
                 item['image'] = image
                 item['email'] = email
                 item['Phone_No'] = Phone_No
@@ -314,22 +495,8 @@ class WebsitesSpider(scrapy.Spider):
 
     def Linkedin_crawler(self, response):
 
-        '''
-        LinkdedIn crawler
-        '''
-        print("LinkdedIn Crawler\n",response)
-
-
-        from linkedin_api import Linkedin
-
-        # Authenticate using any Linkedin account credentials
-        api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
-        profile_id = response.request.url.split("/")[-1]
-        # GET a profile
-        profile = api.get_profile(profile_id)
-        for key, value in profile.items():
-            print("{0:>20} ......... {1}".format(key,value))
-
+        
+        print("item ", item)
         return None
 
 
@@ -338,7 +505,7 @@ class WebsitesSpider(scrapy.Spider):
         '''
         Error handling function
         '''
-
+        print("In errorback\n\n")
         # log all failures
         self.logger.error(repr(failure))
 

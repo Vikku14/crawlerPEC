@@ -22,7 +22,6 @@ import scrapy
 class GeneralItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    url = scrapy.Field()
     Name = scrapy.Field()
     designation = scrapy.Field()
     designation_detail = scrapy.Field()
@@ -31,10 +30,28 @@ class GeneralItem(scrapy.Item):
     email = scrapy.Field()
     education = scrapy.Field()
     University = scrapy.Field()
+
+    doctrate_degree = scrapy.Field()
+    doctrate_discipline = scrapy.Field()
+    doctrate_passing_year = scrapy.Field()
+    doctrate_university_name = scrapy.Field()
+
+    post_graduation_degree = scrapy.Field()
+    post_graduation_discipline = scrapy.Field()
+    post_graduation_passing_year = scrapy.Field()
+    post_graduation_university_name = scrapy.Field()
+
+    graduation_degree = scrapy.Field()
+    graduation_discipline = scrapy.Field()
+    graduation_passing_year = scrapy.Field()
+    graduation_university_name = scrapy.Field()
+
+    experience = scrapy.Field()
+
     address = scrapy.Field()
     image = scrapy.Field()
     Phone_No = scrapy.Field()
-    # name = scrapy.Field()
+    url = scrapy.Field()
 
 
 '''
