@@ -12,6 +12,8 @@ from twisted.internet.error import TimeoutError, TCPTimedOutError
 class WebsitesSpider(scrapy.Spider):
     name = 'websites'
 
+    row_number = 3
+
     start_urls = list()
 
 
@@ -27,16 +29,16 @@ class WebsitesSpider(scrapy.Spider):
                        'post_graduation_university_name', 'graduation_degree', 'graduation_discipline', 'graduation_passing_year', 
                        'graduation_university_name', 'experience', 'image', 'email', 'Phone_No']
 
-        self.doctrate_list = ['doctor', 'ph.d']
-        self.post_graduation_list = ['master']
-        self.graduation_list = ['ba', 'bachelor']
+        self.doctrate_list = ['doctor', 'ph.d', 'philosophy']
+        self.post_graduation_list = ['master', 'msc', 'mba']
+        self.graduation_list = ['ba', 'bachelor', 'ca']
 
 
 
     # file = '../stanford/stanford.xlsx'
     # file = '../Imperial/imperial.xlsx'
-    # file = '../ETH/eth.xlsx'
-    file = '../Chicago/chicago.xlsx'
+    file = '../ETH/eth.xlsx'
+    # file = '../Chicago/chicago.xlsx'
 
     data = pd.read_excel(file, usecols=['Name','URL'],
                          index_col = 0, skiprows =[2])
@@ -55,11 +57,10 @@ class WebsitesSpider(scrapy.Spider):
     row_urls = dict.fromkeys(row_urls_0, False)
 
 
-    row_number = 66
-    # no_of_rows = 
+    no_of_rows = 7
 
 
-    no_of_rows = int(data.shape[0])
+    # no_of_rows = int(data.shape[0])
 
     handle_httpstatus_list = [307, 401, 403, 404, 410, 500, 502, 999]
 
@@ -112,6 +113,7 @@ class WebsitesSpider(scrapy.Spider):
             self.row_urls[response.request.url.split("://")[1]] = self.row_urls.pop(redirect_url)
             print(self.row_urls)
         except Exception as e:
+            print("No ", e)
             pass
 
         if self.row_urls[response.request.url.split("://")[1]] == False:
@@ -156,7 +158,7 @@ class WebsitesSpider(scrapy.Spider):
                 LinkdedIn crawler
                 '''
 
-                print("LinkdedIn Crawler\n", response)
+                print("Enter into LinkdedIn Crawler\n", response)
                 
                 # partital initilizing item dict()
                
@@ -204,43 +206,61 @@ class WebsitesSpider(scrapy.Spider):
                     
                     item['url'] = r
 
-                    item['Name'] = [profile.get('firstName')+" "+profile.get('lastName')]
-                    item['designation'] = [profile.get('headline')]
+                    item['Name'] = [profile.get('firstName', 'No data')+" "+profile.get('lastName', '')]
+                    item['designation'] = [profile.get('headline', 'No data')]
                     item['designation_detail'] = ['No data']
                     item['major_area'] = [profile.get('industryName', 'No data')]
-                    item['address'] = [profile.get('geoLocationName') + \
-                        ", " + profile.get('locationName')]
+                    item['address'] = [profile.get('geoLocationName', 'No data') + \
+                        ", " + profile.get('locationName', '')]
                     item['contact'] = ['No data']
 
                     for edu in profile.get('education'):
                         for key, value in edu.items():
                             if edu.get('degreeName') == None:
                                 if item['education'] == ['No data']:
-                                    item['education'] =  [edu.get('fieldOfStudy')+" "+edu.get('schoolName')]
+                                    item['education'] =  [edu.get('fieldOfStudy', 'No data')+" "+edu.get('schoolName', '')]
                                 else:
-                                    item['education'].extend([edu.get('fieldOfStudy')+" "+edu.get('schoolName')])
+                                    item['education'].extend([edu.get('fieldOfStudy', 'No data')+" "+edu.get('schoolName', '')])
                                 break
                             if any(item in edu.get('degreeName').lower() for item in self.graduation_list):
-                                item['graduation_degree'] = [edu.get('degreeName')]
-                                item['graduation_discipline'] = [edu.get('fieldOfStudy')]
-                                item['graduation_passing_year'] = [str(edu.get('timePeriod').get('endDate').get('year'))]
-                                item['graduation_university_name'] = [edu.get('schoolName')]
+                                item['graduation_degree'] = [edu.get('degreeName', 'No data')]
+                                item['graduation_discipline'] = [edu.get('fieldOfStudy', 'No data')]
+                                timePeriod = edu.get('timePeriod')
+                                if timePeriod:
+                                    if timePeriod.get('endDate'):
+                                        item['graduation_passing_year'] = [str(timePeriod.get('endDate').get('year'))]
+                                else:
+                                    item['graduation_passing_year'] = ['No data']
+                                item['graduation_university_name'] = [edu.get('schoolName', 'No data')]
 
                             elif any(item in edu.get('degreeName').lower() for item in self.post_graduation_list):
-                                item['post_graduation_degree'] = [edu.get('degreeName')]
-                                item['post_graduation_discipline'] = [edu.get('fieldOfStudy')]
-                                item['post_graduation_passing_year'] = [str(edu.get('timePeriod').get('endDate').get('year'))]
-                                item['post_graduation_university_name'] = [edu.get('schoolName')]
+                                item['post_graduation_degree'] = [edu.get('degreeName', 'No data')]
+                                item['post_graduation_discipline'] = [edu.get('fieldOfStudy', 'No data')]
+                                timePeriod = edu.get('timePeriod')
+                                if timePeriod:
+                                    if timePeriod.get('endDate'):
+
+                                        item['post_graduation_passing_year'] = [str(timePeriod.get('endDate').get('year'))]
+                                else:
+                                    item['post_graduation_passing_year'] = ['No data']
+                                item['post_graduation_university_name'] = [edu.get('schoolName', 'No data')]
                                             
                             elif any(item in edu.get('degreeName').lower() for item in self.doctrate_list):
-                                item['doctrate_degree'] = ['No data']
-                                item['doctrate_discipline'] = ['No data']
-                                item['doctrate_passing_year'] = ['No data']
-                                item['doctrate_university_name'] = ['No data']
+                                item['doctrate_degree'] = [
+                                    edu.get('degreeName', 'No data')]
+                                item['doctrate_discipline'] = [
+                                    edu.get('fieldOfStudy', 'No data')]
+                                timePeriod =  edu.get('timePeriod')
+                                if timePeriod:
+                                    if timePeriod.get('endDate'):
+                                        item['doctrate_passing_year'] = [
+                                            str(timePeriod.get('endDate').get('year'))]
+                                else:
+                                    item['doctrate_passing_year'] = ['No data']
+                                item['doctrate_university_name'] = [
+                                    edu.get('schoolName', 'No data')]
                                             
                                 
-                    
-
                     if profile.get('experience'):
                         latest_exp = profile['experience'][0] # considering latest experience
                         
@@ -280,10 +300,11 @@ class WebsitesSpider(scrapy.Spider):
             elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
 
                 # name = list(set(map(str.strip, response.xpath("/html/head/meta[contains(@name,'name') or (contains(@property,'name') and not(contains(@property,'site_name'))) or contains(@name,'title')]/@content").extract())))
-                name = list(set(map(str.strip, response.xpath("//h1/descendant-or-self::*[not(self::style)] /text() | (//*)[not(ancestor::ul)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract())))
+                name = list(set(map(str.strip, response.xpath(
+                    "//h1/descendant-or-self::*[not(self::style) and not(self::script)] /text() | (//*)[not(ancestor::ul) and not(self::script)and not(self::style)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract())))
                 if not name:
                     name = ['No data']
-                print(name)
+                print("name", name)
                 designation = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][(contains(@class, "title") or contains(@id, "title") or contains(@itemprop, "title")) and (contains(@class, "job") or contains(@itemprop,"job") )]/text()').extract())))
                 if not designation:
                     designation = ['No data']
@@ -380,6 +401,8 @@ class WebsitesSpider(scrapy.Spider):
 
             self.row_urls[response.request.url.split("://")[1]] = True
             print("\nbefore enterting: ", self.row_urls)
+
+
             if all(value == True for value in self.row_urls.values()):
 
                 self.all_true_block()
@@ -505,9 +528,12 @@ class WebsitesSpider(scrapy.Spider):
         '''
         Error handling function
         '''
+
         print("In errorback\n\n")
         # log all failures
         self.logger.error(repr(failure))
+        failure_url = failure.request.url
+        response = scrapy.http.Response(failure_url, status=200)
 
         # in case you want to do something special for some errors,
         # you may need the failure's type:
@@ -530,7 +556,8 @@ class WebsitesSpider(scrapy.Spider):
             self.row_urls[request.url.split("://")[1]] = True
             print(self.row_urls, end="\n\n")
             self.logger.error('TimeoutError on %s', request.url)
-            self.row_number += 1
+            # raise IgnoreRequest("max redirections reached")
+            # self.row_number += 1
 
 
         elif failure.check(ConnectError):
@@ -538,3 +565,5 @@ class WebsitesSpider(scrapy.Spider):
             self.row_urls[request.url.split("://")[1]] = True
             print(self.row_urls, end="\n\n")
             self.logger.error('ConnectError on %s', request.url)
+        print("response: ", response)
+        return self.parse(response)
