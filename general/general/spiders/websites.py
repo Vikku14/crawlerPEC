@@ -12,7 +12,7 @@ from twisted.internet.error import TimeoutError, TCPTimedOutError
 class WebsitesSpider(scrapy.Spider):
     name = 'websites'
 
-    row_number = 3
+    row_number = 1
 
     start_urls = list()
 
@@ -37,8 +37,8 @@ class WebsitesSpider(scrapy.Spider):
 
     # file = '../stanford/stanford.xlsx'
     # file = '../Imperial/imperial.xlsx'
-    file = '../ETH/eth.xlsx'
-    # file = '../Chicago/chicago.xlsx'
+    # file = '../ETH/eth.xlsx'
+    file = '../Chicago/chicago.xlsx'
 
     data = pd.read_excel(file, usecols=['Name','URL'],
                          index_col = 0, skiprows =[2])
@@ -180,14 +180,20 @@ class WebsitesSpider(scrapy.Spider):
 
                 item['education'] = ['No data']
 
+                item['image'] = ['No data']
+                item['email'] = ['No data']
+                item['Phone_No'] = ['No data']
+
                 # Authenticate using any Linkedin account credentials
                 api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
                 profile_id = r.split("/")[-1]
 
                 # GET a profile
                 profile = api.get_profile(profile_id)
-
+                
+                
                 if profile:  # To avoid 404 pages in linkedin
+                    '''
                     for key, value in profile.items():
                         print("{0:>20} ......... {1}".format(key, value))
                     
@@ -203,7 +209,9 @@ class WebsitesSpider(scrapy.Spider):
                         for key, value in profile['experience'][0].items():
                             print("{0:>20} ......... {1}".format(key, value))
                         print("\n\n")
-                    
+                
+                    '''    
+                
                     item['url'] = r
 
                     item['Name'] = [profile.get('firstName', 'No data')+" "+profile.get('lastName', '')]
@@ -268,27 +276,83 @@ class WebsitesSpider(scrapy.Spider):
                             
                     else:
                         item['experience'] = ['No data']
+                    
+                    
 
-
-                else:
-                    item['url'] = r
-
-                    item['Name'] = ['No data']
-                    item['designation'] = ['No data']
-                    item['designation_detail'] = ['No data']
-                    item['major_area'] = ['No data']
-                    item['address'] = ['No data']
-                    item['contact'] = ['No data']
-                    item['experience'] = ['No data']
-
-                item['image'] = ['No data']
-                item['email'] = ['No data']
-                item['Phone_No'] = ['No data']
-
-                    # yield scrapy.Request(r, callback=self.Linkedin_crawler)
-                    # for ar in self.Linkedin_crawler(response):
-                    #     yield ar
+            elif 'researchgate' in r:
                 
+                '''
+                ResearchGate crawler
+                '''
+
+                print("Enter into ResearchGate Crawler\n", response)
+                
+                # name = list(set(map(str.strip, response.xpath("/html/head/meta[contains(@name,'name') or (contains(@property,'name') and not(contains(@property,'site_name'))) or contains(@name,'title')]/@content").extract())))
+                name = list(set(map(str.strip, response.xpath(
+                    "//div[contains(@class, 'nova-e-text') and contains(@class, 'nova-e-text--size-xxl')]/text()").extract())))
+                if not name:
+                    name = ['No data']
+                print("name", name)
+                
+
+                designation = list(set(map(str.strip, response.xpath(
+                    '//div[contains(@class, "nova-e-text") and contains(@class, "nova-e-text--size-m") and contains(@class, "nova-e-text--color-grey-600") and contains(@class, "title")]/text()').extract())))
+                if not designation:
+                    designation = ['No data']
+
+                designation_detail = list(set(map(str.strip, response.xpath(
+                    '//div[contains(@class, "nova-e-text") and contains(@class, "nova-e-text--size-m") and contains(@class, "nova-e-text--color-grey-600")]/span[last()]/text()').extract())))
+                if not designation_detail:
+                    designation_detail = ['No data']
+
+                major_area = ['No data']
+
+                address = ['No data']
+
+                contact = ['No data']
+
+                education = ['No data']
+
+                image = list(set(map(str.strip, response.xpath(
+                    "//div[contains(@class, 'nova-e-avatar')]/img[contains(@class, 'nova-e-avatar__img')]/@src").extract())))
+                
+
+                if not image:
+                    image = ['No data']
+
+                email = ['No data']
+
+                Phone_No = ['No data']
+
+                item['url'] = r
+                item['Name'] = name
+                item['designation'] = designation
+                item['designation_detail'] = designation_detail
+                item['major_area'] = major_area
+                item['address'] = address
+                item['contact'] = contact
+                item['education'] = education
+
+                item['doctrate_degree'] = ['No data']
+                item['doctrate_discipline'] = ['No data']
+                item['doctrate_passing_year'] = ['No data']
+                item['doctrate_university_name'] = ['No data']
+
+                item['post_graduation_degree'] = ['No data']
+                item['post_graduation_discipline'] = ['No data']
+                item['post_graduation_passing_year'] = ['No data']
+                item['post_graduation_university_name'] = ['No data']
+
+                item['graduation_degree'] = ['No data']
+                item['graduation_discipline'] = ['No data']
+                item['graduation_passing_year'] = ['No data']
+                item['graduation_university_name'] = ['No data']
+
+                item['experience'] = ['No data']
+
+                item['image'] = image
+                item['email'] = email
+                item['Phone_No'] = Phone_No
 
             elif ".pdf" in response.request.url:  # TODO: Handle PDFs
                 print("PDF found: Ignoring")
@@ -297,7 +361,7 @@ class WebsitesSpider(scrapy.Spider):
             
 
 
-            elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401: ## TODO: Handle 403 seperatly
+            elif response.status != 500 and response.status != 502 and response.status != 403 and response.status != 401:
 
                 # name = list(set(map(str.strip, response.xpath("/html/head/meta[contains(@name,'name') or (contains(@property,'name') and not(contains(@property,'site_name'))) or contains(@name,'title')]/@content").extract())))
                 name = list(set(map(str.strip, response.xpath(
