@@ -19,6 +19,7 @@ class WebsitesSpider(scrapy.Spider):
 
     academician = list()
     fields = list()
+    name_field = list()
     url_status = dict()
 
     def __init__(self):
@@ -29,17 +30,19 @@ class WebsitesSpider(scrapy.Spider):
                        'doctrate_university_name', 'post_graduation_degree', 'post_graduation_discipline', 'post_graduation_passing_year',
                        'post_graduation_university_name', 'graduation_degree', 'graduation_discipline', 'graduation_passing_year', 
                        'graduation_university_name', 'experience', 'image', 'email', 'Phone_No']
+        
+        self.name_field = ['Name']
 
-        self.doctrate_list = ['doctor', 'ph.d', 'philosophy']
-        self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.']
-        self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.']
+        self.doctrate_list = ['doctor', 'ph.d', 'philosophy' ,'dphil', 'phd']
+        self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil']
+        self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb']
 
 
 
     # file = '../stanford/stanford.xlsx'
     # file = '../Imperial/imperial.xlsx'
     # file = '../ETH/eth.xlsx'
-    file = '../10_universities/CALIFORNIA INSTITUTE OF TECHNOLOGY, USA.xlsx'
+    file = '../10_universities/STANFORD, USA.xlsx'
 
     data = pd.read_excel(file, usecols=['name', 'url', 'LinkedIn_id', 'facebook_id', 'twitter_id', 'Research_gate_id', 'Google_scholar_id'],
                          index_col = 0, skiprows =[2])
@@ -54,14 +57,14 @@ class WebsitesSpider(scrapy.Spider):
         row0 = complete_row.split(',')
 
         for r in row0:
-            if r and not r.startswith('file://') and not r.startswith('Not') and r != 'nan':
+            if r and not r.strip().startswith('file://') and not r.startswith('Not') and r != 'nan':
                 start_urls.append(r.strip())
         # start_urls = list(map(str.strip, row0))
     print("start_urls", start_urls)
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 40
+    row_number = 198
 
 
     # no_of_rows = 40
@@ -167,7 +170,7 @@ class WebsitesSpider(scrapy.Spider):
                     LinkdedIn crawler
                     '''
 
-                    print("Enter into LinkdedIn Crawler\n")
+                    print("Enter into LinkdedIn Crawler\n", r)
                     
                     # partital initilizing item dict()
                 
@@ -204,7 +207,8 @@ class WebsitesSpider(scrapy.Spider):
 
                     # Authenticate using any Linkedin account credentials
                     api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
-                    profile_id = r.split("/")[-1]
+                    profile_id = r.split("in/")[1].split('/')[0]
+                    print("vanity name\n",profile_id)
 
                     # GET a profile
                     profile = api.get_profile(profile_id)
@@ -285,6 +289,13 @@ class WebsitesSpider(scrapy.Spider):
                                         item['doctrate_passing_year'] = ['No data']
                                     item['doctrate_university_name'] = [
                                         edu.get('schoolName', 'No data')]
+                                else:
+                                    if item['education'] == ['No data']:
+                                        item['education'] = [
+                                            edu.get('fieldOfStudy', 'No data')+" "+edu.get('schoolName', '')]
+                                    else:
+                                        item['education'].extend(
+                                            [edu.get('fieldOfStudy', 'No data')+" "+edu.get('schoolName', '')])
                                                 
                                     
                         if profile.get('experience'):
@@ -386,7 +397,8 @@ class WebsitesSpider(scrapy.Spider):
                             "//h1/descendant-or-self::*[not(self::style) and not(self::script)] /text() | (//*)[not(ancestor::ul) and not(self::script)and not(self::style)][contains(@class, 'name') or contains(@id, 'name') or contains(@itemprop, 'name')]/text()").extract())))
                         if not name:
                             name = ['No data']
-                        # print("name", name)
+                        name = list(map(lambda x: x.replace('"', ''), name))
+                        print("name", name)
                         designation = list(set(map(str.strip, response.xpath('(//*)[not(ancestor::ul)][(contains(@class, "title") or contains(@id, "title") or contains(@itemprop, "title")) and (contains(@class, "job") or contains(@itemprop,"job") )]/text()').extract())))
                         if not designation:
                             designation = ['No data']
@@ -525,7 +537,7 @@ class WebsitesSpider(scrapy.Spider):
 
             print("\n................................................................................................................................")
             for key, value in self.academician_data.items():
-                if key in self.fields:
+                if key in self.fields or key in self.name_field:
                     self.academician_data[key] = list(set(value))
                 print("{0:>20} ......... {1}".format(key,self.academician_data[key]))
             print("\n................................................................................................................................\n")
@@ -558,7 +570,8 @@ class WebsitesSpider(scrapy.Spider):
                     row0 = complete_row.split(',')
                     self.row_urls_0 = list()
                     for rk in row0:
-                        if rk and not rk.startswith('file://') and not rk.startswith('Not') and rk != 'nan':
+                        
+                        if rk and not rk.strip().startswith('file://') and not rk.startswith('Not') and rk != 'nan':
                             self.row_urls_0.append(rk.strip())
 
                     # self.row_urls_0 = list(map(str.strip, row0))
@@ -617,7 +630,9 @@ class WebsitesSpider(scrapy.Spider):
                             self.academician_data['Name'].remove('404: Page not found')
                         except Exception:
                             pass
-
+                
+                
+                            
                 for field in self.fields:   # Comparing all other fields
 
                     if element[field] != ['No data']:
