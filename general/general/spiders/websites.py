@@ -12,15 +12,12 @@ from twisted.internet.error import TimeoutError, TCPTimedOutError
 class WebsitesSpider(scrapy.Spider):
     name = 'websites'
 
-    
-    
     start_urls = list()
-
-
     academician = list()
     fields = list()
     name_field = list()
     url_status = dict()
+    pdf_formats = list()
 
     def __init__(self):
         self.initialize_academician_data()
@@ -36,6 +33,7 @@ class WebsitesSpider(scrapy.Spider):
         self.doctrate_list = ['doctor', 'ph.d', 'philosophy' ,'dphil', 'phd']
         self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil']
         self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb']
+        self.pdf_formats = ['.pdf', 'viewcv', 'frdactionservlet', 'download']
 
 
 
@@ -64,7 +62,7 @@ class WebsitesSpider(scrapy.Spider):
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 198
+    row_number = 173
 
 
     # no_of_rows = 40
@@ -115,7 +113,6 @@ class WebsitesSpider(scrapy.Spider):
             print("\n-----------------------------------\nStart --> row_urls", self.row_urls,end="\n\n")
             print("current URL: ",response.request.url)
             print("Status: ",response.status,end="\n\n")
-
             self.url_status[response.request.url] = response.status
 
             try:
@@ -381,9 +378,41 @@ class WebsitesSpider(scrapy.Spider):
                     item['email'] = email
                     item['Phone_No'] = Phone_No
 
-                elif ".pdf" in response.request.url:  # TODO: Handle PDFs
+                    print("Name", name)
+
+                elif any(item in response.request.url.lower() for item in self.pdf_formats):
                     print("PDF found: Ignoring")
                     self.row_urls[response.request.url.split("://")[1]] = True
+                    item['url'] = r
+                    item['Name'] = ['No data']
+                    item['designation'] = ['No data']
+                    item['designation_detail'] = ['No data']
+                    item['major_area'] = ['No data']
+                    item['address'] = ['No data']
+                    item['contact'] = ['No data']
+                    item['education'] = ['No data']
+
+                    item['doctrate_degree'] = ['No data']
+                    item['doctrate_discipline'] = ['No data']
+                    item['doctrate_passing_year'] = ['No data']
+                    item['doctrate_university_name'] = ['No data']
+
+                    item['post_graduation_degree'] = ['No data']
+                    item['post_graduation_discipline'] = ['No data']
+                    item['post_graduation_passing_year'] = ['No data']
+                    item['post_graduation_university_name'] = ['No data']
+
+                    item['graduation_degree'] = ['No data']
+                    item['graduation_discipline'] = ['No data']
+                    item['graduation_passing_year'] = ['No data']
+                    item['graduation_university_name'] = ['No data']
+
+                    item['experience'] = ['No data']
+
+                    item['image'] = ['No data']
+                    item['email'] = ['No data']
+                    item['Phone_No'] = ['No data']
+
                     # print(self.row_urls)
                 
 
@@ -453,7 +482,9 @@ class WebsitesSpider(scrapy.Spider):
                         if not email:
                             email = ['No data']
                         Phone_No = list(set(map(str.strip, response.xpath(
-                            '(//*)[contains(@class, "phone") or contains(@id, "phone") or contains(@itemprop, "phone")]/descendant-or-self::*/text()').extract())))
+                            '(//*)[contains(@class, "phone") or contains(@id, "phone") or contains(@itemprop,"phone")]/text()').extract())))
+                        # Phone_No = list(set(map(str.strip, response.xpath(
+                        #     '(//*)[contains(@class, "phone") or contains(@id, "phone") or contains(@itemprop,"phone")]/descendant-or-self::*/text()').extract())))
                         if not Phone_No:
                             Phone_No = ['No data']
                         # print(self.data[self.data['URL'].str.contains(str(r))])
@@ -665,8 +696,10 @@ class WebsitesSpider(scrapy.Spider):
         if failure.check(HttpError):
             # these exceptions come from HttpError spider middleware
             # you can get the non-200 response
-            response = failure.value.response
-            self.logger.error('HttpError on %s', response.url)
+            request = failure.request
+            self.row_urls[request.url.split("://")[1]] = True
+            print(self.row_urls, end="\n\n")
+            self.logger.error('HttpError on %s', request.url)
 
         elif failure.check(DNSLookupError):
             # this is the original request
