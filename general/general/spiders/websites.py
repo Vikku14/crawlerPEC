@@ -33,17 +33,12 @@ class WebsitesSpider(scrapy.Spider):
         self.doctrate_list = ['doctor', 'ph.d', 'philosophy' ,'dphil', 'phd']
         self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil']
         self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb']
-        self.pdf_formats = ['.pdf', 'viewcv', 'frdactionservlet', 'download']
+        self.pdf_formats = ['.pdf', 'cv', 'frdactionservlet', 'download', 'file']
 
-
-
-    # file = '../stanford/stanford.xlsx'
-    # file = '../Imperial/imperial.xlsx'
-    # file = '../ETH/eth.xlsx'
-    file = '../10_universities/STANFORD, USA.xlsx'
+    file = '../10_universities/MIT, USA.xlsx'
 
     data = pd.read_excel(file, usecols=['name', 'url', 'LinkedIn_id', 'facebook_id', 'twitter_id', 'Research_gate_id', 'Google_scholar_id'],
-                         index_col = 0, skiprows =[2])
+                         index_col=0, skiprows=[2])
 
     # fetch 1st row of every excel file >> start_urls
     # print(data)
@@ -51,6 +46,8 @@ class WebsitesSpider(scrapy.Spider):
     data_first = data.iloc[[0]]
 
     for i, row in data_first.iterrows():
+        if not str(row[0]).strip().startswith("Not") and not str(row[0]).strip().startswith("http"): # to handle twitter
+            row[0] = 'https://www.twitter.com/' + str(row[0])
         complete_row = row[0] + "," + str(row[1]) + "," + str(row[2]) + "," + str(row[3])+ "," +str(row[4])+ ',' + str(row[5])
         row0 = complete_row.split(',')
 
@@ -58,14 +55,15 @@ class WebsitesSpider(scrapy.Spider):
             if r and not r.strip().startswith('file://') and not r.startswith('Not') and r != 'nan':
                 start_urls.append(r.strip())
         # start_urls = list(map(str.strip, row0))
+    
     print("start_urls", start_urls)
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 173
+    row_number = 1
 
 
-    # no_of_rows = 40
+    # no_of_rows = 85
 
     no_of_rows = int(data.shape[0])
     
@@ -596,6 +594,11 @@ class WebsitesSpider(scrapy.Spider):
                 # print(data_row)
                 for i, row in data_row.iterrows():
                     # print(row[0], type(row[0]))
+                    # to handle twitter
+                    if not str(row[0]).strip().startswith("Not") and not str(row[0]).strip().startswith("http"): # Handle with Twitter
+                        row[0] = 'https://www.twitter.com/' + str(row[0])
+                    
+                    print("twiiter link (modified):", row[0])
                     complete_row = str(row[0]) + "," + str(row[1]) + "," + \
                         str(row[2]) + "," + str(row[3]) + "," + str(row[4]) + ',' + str(row[5])
                     row0 = complete_row.split(',')
@@ -626,9 +629,6 @@ class WebsitesSpider(scrapy.Spider):
                 print("done with links")
 
                 self.row_number += 1
-
-
-
 
     def print_row_number(self):
 
@@ -676,7 +676,6 @@ class WebsitesSpider(scrapy.Spider):
                 self.academician_data['url'] = self.academician_data['url']+element['url']+"\n"
             # print(self.academician_data)
         self.academician_data['University'] = self.file.split('/')[2][:-5]
-
 
     def errorback(self, failure):
 
