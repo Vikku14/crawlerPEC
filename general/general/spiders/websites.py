@@ -31,11 +31,11 @@ class WebsitesSpider(scrapy.Spider):
         self.name_field = ['Name']
 
         self.doctrate_list = ['doctor', 'ph.d', 'philosophy' ,'dphil', 'phd']
-        self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil']
-        self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb']
+        self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil', 'pgd']
+        self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb', 'be']
         self.pdf_formats = ['.pdf', 'cv', 'frdactionservlet', 'download', 'file']
 
-    file = '../10_universities/MIT, USA.xlsx'
+    file = '../10_universities/HARVARD UNIVERSITY, USA Complete.xlsx'
 
     data = pd.read_excel(file, usecols=['name', 'url', 'LinkedIn_id', 'facebook_id', 'twitter_id', 'Research_gate_id', 'Google_scholar_id'],
                          index_col=0, skiprows=[2])
@@ -683,7 +683,9 @@ class WebsitesSpider(scrapy.Spider):
         Error handling function
         '''
 
-        print("In errorback\n\n")
+        print("\t\t||In errorback\t||")
+        print("\t\t\t||")
+        print("\t\t\t||")
         # log all failures
         self.logger.error(repr(failure))
         failure_url = failure.request.url
