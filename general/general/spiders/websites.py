@@ -35,10 +35,10 @@ class WebsitesSpider(scrapy.Spider):
         self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb', 'be']
         self.pdf_formats = ['.pdf', 'cv', 'frdactionservlet', 'download', 'file']
 
-    file = '../10_universities/HARVARD UNIVERSITY, USA Complete.xlsx'
+    file = '../10_universities/PRINCETON UNIVERSITY, USA.xlsx'
 
     data = pd.read_excel(file, usecols=['name', 'url', 'LinkedIn_id', 'facebook_id', 'twitter_id', 'Research_gate_id', 'Google_scholar_id'],
-                         index_col=0, skiprows=[2])
+                         index_col=0)
 
     # fetch 1st row of every excel file >> start_urls
     # print(data)
@@ -60,10 +60,10 @@ class WebsitesSpider(scrapy.Spider):
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 1
+    row_number = 131
 
 
-    # no_of_rows = 85
+    # no_of_rows = 3
 
     no_of_rows = int(data.shape[0])
     
