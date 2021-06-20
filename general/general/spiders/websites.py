@@ -11,7 +11,7 @@ from twisted.internet.error import TimeoutError, TCPTimedOutError
 
 class WebsitesSpider(scrapy.Spider):
     name = 'websites'
-
+    
     start_urls = list()
     academician = list()
     fields = list()
@@ -33,9 +33,13 @@ class WebsitesSpider(scrapy.Spider):
         self.doctrate_list = ['doctor', 'ph.d', 'philosophy' ,'dphil', 'phd']
         self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil', 'pgd']
         self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb', 'be']
-        self.pdf_formats = ['.pdf', 'cv', 'frdactionservlet', 'download', 'file']
+        self.pdf_formats = ['.pdf', 'cv', 'frdactionservlet', 'download', 'file', 'interconvention-public']
 
-    file = '../10_universities/PRINCETON UNIVERSITY, USA.xlsx'
+
+
+    file = '../10_universities/UNIVERSITY OF CAMBRIDGE, UK.xlsx'
+
+
 
     data = pd.read_excel(file, usecols=['name', 'url', 'LinkedIn_id', 'facebook_id', 'twitter_id', 'Research_gate_id', 'Google_scholar_id'],
                          index_col=0)
@@ -60,12 +64,12 @@ class WebsitesSpider(scrapy.Spider):
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 131
+    row_number = 1
 
 
-    # no_of_rows = 3
+    no_of_rows = 3
 
-    no_of_rows = int(data.shape[0])
+    # no_of_rows = int(data.shape[0])
     
 
     handle_httpstatus_list = [301, 302, 307, 401, 403, 404, 410, 500, 502, 999]
