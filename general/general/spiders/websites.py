@@ -33,11 +33,11 @@ class WebsitesSpider(scrapy.Spider):
         self.doctrate_list = ['doctor', 'ph.d', 'philosophy' ,'dphil', 'phd']
         self.post_graduation_list = ['master', 'msc', 'mba', 'ms', 'm.s.', 'ma', 'm.a.', 'jd', 'Mphil', 'pgd']
         self.graduation_list = ['ba', 'bachelor', 'ca', 'bs', 'b.s.' ,'ll.b.', 'llb', 'be']
-        self.pdf_formats = ['.pdf', 'cv', 'frdactionservlet', 'download', 'file', 'interconvention-public']
+        self.pdf_formats = ['pdf', 'docx','cv', 'frdactionservlet', 'download', 'file', 'interconvention-public']
 
 
 
-    file = '../10_universities/UNIVERSITY OF CAMBRIDGE, UK.xlsx'
+    file = '../10_universities/IMPERIAL COLLEGE LONDON, UK.xlsx'
 
 
 
@@ -64,12 +64,12 @@ class WebsitesSpider(scrapy.Spider):
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 1
+    row_number = 621
 
 
-    no_of_rows = 3
+    # no_of_rows = 3
 
-    # no_of_rows = int(data.shape[0])
+    no_of_rows = int(data.shape[0])
     
 
     handle_httpstatus_list = [301, 302, 307, 401, 403, 404, 410, 500, 502, 999]
