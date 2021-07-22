@@ -1,7 +1,7 @@
 from linkedin_api import Linkedin
 
 # Authenticate using any Linkedin account credentials
-api = Linkedin('viveksharma.mtcse19@pec.edu.in', 'vivek@pec')
+api = Linkedin('**username**', '**password**')
 
 # GET a profile
 profile = api.get_profile('manish-r-sharma-8596b554')

@@ -42,7 +42,7 @@ COOKIES_ENABLED = False
 #   'Accept-Language': 'en',
 #}
 
-RETRY_ENABLED = False
+RETRY_ENABLED = True
 
 USER_AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 # USER_AGENT = 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'

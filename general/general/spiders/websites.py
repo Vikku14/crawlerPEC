@@ -37,7 +37,7 @@ class WebsitesSpider(scrapy.Spider):
 
 
 
-    file = '../10_universities/IMPERIAL COLLEGE LONDON, UK.xlsx'
+    file = '../10_universities/UNIVERSITY OF CHICAGO, USA.xlsx'
 
 
 
@@ -64,7 +64,7 @@ class WebsitesSpider(scrapy.Spider):
     row_urls_0 = [row.split("://")[1] for row in start_urls]
     row_urls = dict.fromkeys(row_urls_0, False)
 
-    row_number = 621
+    row_number = 78
 
 
     # no_of_rows = 3
@@ -163,7 +163,7 @@ class WebsitesSpider(scrapy.Spider):
                     item['Phone_No'] = ['No data']
                     
 
-                elif 'google' not in r and 'linkedin' in r:
+                elif 'google' not in r and 'linkedin.com/in' in r:
                     
                     '''
                     LinkdedIn crawler
@@ -693,6 +693,7 @@ class WebsitesSpider(scrapy.Spider):
         # log all failures
         self.logger.error(repr(failure))
         failure_url = failure.request.url
+        print(failure_url)
         response = scrapy.http.Response(failure_url, status=200)
 
         # in case you want to do something special for some errors,
